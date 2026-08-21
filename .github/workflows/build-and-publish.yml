@@ -76,16 +76,16 @@ jobs:
 
       - name: Upload Checkov results
         uses: actions/upload-artifact@v4
-        if: always() && hashFiles('checkov-results.json') != ''
+        if: always() && hashFiles('checkov-results.json/results_json.json') != ''
         with:
           name: ankra-checkov-scan
-          path: checkov-results.json
+          path: checkov-results.json/results_json.json
           retention-days: 90
 
       - name: Check Checkov findings
-        if: always() && hashFiles('checkov-results.json') != ''
+        if: always() && hashFiles('checkov-results.json/results_json.json') != ''
         run: |
-          failed=$(jq '[.. | objects | select(has("results")) | .results.failed_checks // []] | flatten | length' checkov-results.json)
+          failed=$(jq '[.. | objects | select(has("results")) | .results.failed_checks // []] | flatten | length' checkov-results.json/results_json.json)
           {
             echo "### Checkov"
             echo ""
@@ -96,7 +96,7 @@ jobs:
           fi
 
       - name: Check Checkov chart coverage
-        if: always() && hashFiles('checkov-results.json') != ''
+        if: always() && hashFiles('checkov-results.json/results_json.json') != ''
         run: |
           if [ -z "$(find . -name Chart.yaml -not -path '*/charts/*' -print -quit)" ]; then
             exit 0
