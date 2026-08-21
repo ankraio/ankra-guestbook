@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ankra Guestbook</title>
+<style>
+  :root{
+    --bg:#0E1017; --card:#161923; --sunk:#1D2130; --ink:#E8EAF2;
+    --soft:#A7AEC2; --faint:#757D93; --rule:#272C3B; --accent:#8B92FF; --ok:#5FD3A4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",system-ui,sans-serif;line-height:1.6}
+  .wrap{max-width:44rem;margin:0 auto;padding:3rem 1.25rem 4rem;
+    display:flex;flex-direction:column;gap:2rem}
+  .eyebrow{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font-size:2.4rem;line-height:1.05;letter-spacing:-.03em;margin:.4rem 0 0;font-weight:780}
+  .sub{color:var(--soft);margin:.5rem 0 0}
+  .status{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));
+    border:1px solid var(--rule);background:var(--card)}
+  .status div{padding:.9rem 1rem;border-right:1px solid var(--rule);
+    display:flex;flex-direction:column;gap:.15rem}
+  .status div:last-child{border-right:0}
+  .status b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.05rem;
+    font-weight:600;letter-spacing:-.01em;word-break:break-all}
+  .status span{font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--faint);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  form{display:flex;flex-direction:column;gap:.75rem;border:1px solid var(--rule);
+    background:var(--card);padding:1.25rem}
+  label{font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  input,textarea{background:var(--sunk);border:1px solid var(--rule);color:var(--ink);
+    padding:.65rem .75rem;font:inherit;font-size:.95rem;width:100%;border-radius:3px}
+  input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  textarea{resize:vertical;min-height:5rem}
+  button{background:var(--accent);color:#12131c;border:0;padding:.7rem 1.1rem;
+    font:inherit;font-weight:650;cursor:pointer;border-radius:3px;align-self:flex-start}
+  button:hover{filter:brightness(1.08)}
+  button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
+    border:1px solid var(--rule);background:var(--card)}
+  li{padding:.9rem 1.1rem;border-bottom:1px solid var(--rule)}
+  li:last-child{border-bottom:0}
+  .meta{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem;
+    color:var(--faint);display:flex;gap:.6rem;flex-wrap:wrap}
+  .who{color:var(--accent);font-weight:600}
+  .msg{margin:.2rem 0 0;white-space:pre-wrap;word-break:break-word}
+  .empty{padding:1.6rem 1.1rem;color:var(--soft);text-align:center}
+  .err{border:1px solid #FF8098;background:#351A22;color:#FF8098;padding:.9rem 1.1rem;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem;
+    overflow-x:auto;white-space:pre}
+  footer{color:var(--faint);font-size:.8rem;border-top:1px solid var(--rule);padding-top:1.2rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">deployed with ankra</div>
+    <h1>Guestbook</h1>
+    <p class="sub">Every message below is a row in PostgreSQL. Reload and it persists;
+      that is the whole point.</p>
+  </header>
+
+  <div class="status">
+    <div><b style="color:var(--ok)">{{.DBStatus}}</b><span>postgres</span></div>
+    <div><b>{{.Count}}</b><span>entries</span></div>
+    <div><b>{{.Pod}}</b><span>served by pod</span></div>
+    <div><b>v{{.Version}}</b><span>app version</span></div>
+  </div>
+
+  {{if .DBError}}<div class="err">{{.DBError}}</div>{{end}}
+
+  <form method="post" action="/">
+    <div>
+      <label for="name">Your name</label>
+      <input id="name" name="name" maxlength="60" placeholder="Mattias" autocomplete="off">
+    </div>
+    <div>
+      <label for="message">Message</label>
+      <textarea id="message" name="message" maxlength="500" required
+        placeholder="Say something — it goes straight into the database."></textarea>
+    </div>
+    <button type="submit">Sign the guestbook</button>
+  </form>
+
+  <ul>
+    {{if .Entries}}
+      {{range .Entries}}
+      <li>
+        <div class="meta">
+          <span class="who">{{.Name}}</span>
+          <span>{{.Created.Format "2006-01-02 15:04:05 MST"}}</span>
+        </div>
+        <p class="msg">{{.Message}}</p>
+      </li>
+      {{end}}
+    {{else}}
+      <li class="empty">No entries yet. Be the first.</li>
+    {{end}}
+  </ul>
+
+  <footer>Go + PostgreSQL, running on Kubernetes. Health at <code>/healthz</code>.</footer>
+</div>
+</body>
+</html>
