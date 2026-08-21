@@ -3,7 +3,7 @@
 ############################
 # Stage 1: build
 ############################
-FROM golang:1.24-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /src
 
@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 ############################
 # Stage 2: runtime
 ############################
-FROM alpine:3.20 AS runtime
+FROM alpine:3.22 AS runtime
 
 RUN apk add --no-cache ca-certificates tzdata wget \
     && addgroup -g 10001 -S app \
