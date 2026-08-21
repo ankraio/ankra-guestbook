@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guestbook-flowtest
+  labels:
+    app.kubernetes.io/name: guestbook-flowtest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: guestbook-flowtest
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: guestbook-flowtest
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      imagePullSecrets:
+        - name: ankra-registry-pull
+      containers:
+        - name: guestbook-flowtest
+          image: registry.ankra.cloud/org-7b2fedb6-4d79-45fd-b71a-044a2cfddce7/ankra-guestbook:${{ ankra.image_tag }}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-flowtest-db-app
+                  key: uri
+            - name: PORT
+              value: "8080"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 30
+            periodSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+      volumes:
+        - name: tmp
+          emptyDir: {}
