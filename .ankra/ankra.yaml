@@ -65,3 +65,11 @@ options:
     default: ""
     required: false
     description: "IngressClass name (e.g. nginx)."
+  - name: "db_password"
+    type: "string"
+    required: true
+    description: "Password for the bundled PostgreSQL instance. Used by both the database and the app."
+  - name: "public_host"
+    type: "string"
+    required: true
+    description: "Public hostname for the app's Ingress (TLS is issued by cert-manager)."

@@ -16,8 +16,8 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
+        runAsUser: 10001
+        fsGroup: 10001
       imagePullSecrets:
         - name: ankra-registry-pull
       containers:
@@ -28,7 +28,7 @@ spec:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             runAsNonRoot: true
-            runAsUser: 1000
+            runAsUser: 10001
             capabilities:
               drop:
                 - ALL
@@ -39,25 +39,38 @@ spec:
           env:
             - name: PORT
               value: "8080"
-            - name: GIN_MODE
-              value: "release"
+            - name: APP_VERSION
+              value: "${{ ankra.image_tag }}"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: PGHOST
+              value: guestbook-db
+            - name: PGPORT
+              value: "5432"
+            - name: PGSSLMODE
+              value: disable
+          envFrom:
+            - secretRef:
+                name: guestbook-db-app
           volumeMounts:
             - name: tmp
               mountPath: /tmp
           startupProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: http
             failureThreshold: 30
             periodSeconds: 2
           livenessProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: http
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: http
             periodSeconds: 5
           resources:
