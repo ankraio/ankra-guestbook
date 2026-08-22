@@ -1,0 +1,18 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: guestbook-runner-test-db
+  labels:
+    app.kubernetes.io/name: guestbook-runner-test-db
+    app.kubernetes.io/managed-by: ankra
+spec:
+  instances: ${{ ankra.database_instances }}
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.2
+  storage:
+    size: ${{ ankra.database_storage }}
+  bootstrap:
+    initdb:
+      database: guestbook-runner-test-db
+      owner: guestbook-runner-test-db
+  primaryUpdateStrategy: unsupervised
+  enableSuperuserAccess: false
