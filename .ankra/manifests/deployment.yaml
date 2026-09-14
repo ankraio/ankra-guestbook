@@ -1,11 +1,26 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: guestbook-coldwalk
+  labels:
+    app.kubernetes.io/name: guestbook-coldwalk
+automountServiceAccountToken: false
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: guestbook-coldwalk
   labels:
     app.kubernetes.io/name: guestbook-coldwalk
+  annotations:
+    ankra.io/generated: "true"
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: guestbook-coldwalk
@@ -14,10 +29,14 @@ spec:
       labels:
         app.kubernetes.io/name: guestbook-coldwalk
     spec:
+      serviceAccountName: guestbook-coldwalk
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       imagePullSecrets:
         - name: ankra-registry-pull
       containers:
@@ -42,6 +61,33 @@ spec:
                 secretKeyRef:
                   name: guestbook-coldwalk-db-app
                   key: uri
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-coldwalk-db-app
+                  key: dbname
+            - name: PGHOST
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-coldwalk-db-app
+                  key: host
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-coldwalk-db-app
+                  key: password
+            - name: PGPORT
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-coldwalk-db-app
+                  key: port
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-coldwalk-db-app
+                  key: username
+            - name: PORT
+              value: "8080"
           volumeMounts:
             - name: tmp
               mountPath: /tmp
@@ -49,11 +95,10 @@ spec:
             httpGet:
               path: /healthz
               port: http
-            failureThreshold: 30
+            failureThreshold: 150
             periodSeconds: 2
           livenessProbe:
-            httpGet:
-              path: /healthz
+            tcpSocket:
               port: http
             periodSeconds: 10
           readinessProbe:
