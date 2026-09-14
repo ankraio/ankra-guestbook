@@ -1,11 +1,26 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: guestbook-flowtest
+  labels:
+    app.kubernetes.io/name: guestbook-flowtest
+automountServiceAccountToken: false
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: guestbook-flowtest
   labels:
     app.kubernetes.io/name: guestbook-flowtest
+  annotations:
+    ankra.io/generated: "true"
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: guestbook-flowtest
@@ -14,10 +29,14 @@ spec:
       labels:
         app.kubernetes.io/name: guestbook-flowtest
     spec:
+      serviceAccountName: guestbook-flowtest
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       imagePullSecrets:
         - name: ankra-registry-pull
       containers:
@@ -42,6 +61,31 @@ spec:
                 secretKeyRef:
                   name: guestbook-flowtest-db-app
                   key: uri
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-flowtest-db-app
+                  key: dbname
+            - name: PGHOST
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-flowtest-db-app
+                  key: host
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-flowtest-db-app
+                  key: password
+            - name: PGPORT
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-flowtest-db-app
+                  key: port
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: guestbook-flowtest-db-app
+                  key: username
             - name: PORT
               value: "8080"
           volumeMounts:
@@ -49,18 +93,17 @@ spec:
               mountPath: /tmp
           startupProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: http
-            failureThreshold: 30
+            failureThreshold: 150
             periodSeconds: 2
           livenessProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: http
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: http
             periodSeconds: 5
           resources:

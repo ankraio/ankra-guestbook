@@ -64,7 +64,17 @@ options:
     type: "string"
     default: ""
     required: false
-    description: "IngressClass name (e.g. nginx)."
+    description: "IngressClass name (e.g. traefik). Leave empty to use the cluster's default IngressClass."
+  - name: "ingress_extra_hosts"
+    type: "string"
+    default: ""
+    required: false
+    description: "Comma-separated additional hostnames the Ingress also serves (e.g. a customer's own domain). Each becomes its own rule and TLS host beside ingress_host; at most 5."
+  - name: "env_from_secrets"
+    type: "string"
+    default: ""
+    required: false
+    description: "Comma-separated names of Secrets in the application's namespace whose keys become environment variables (envFrom)."
   - name: "ingress_tls_issuer"
     type: "string"
     default: "letsencrypt-prod"
