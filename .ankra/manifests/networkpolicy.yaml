@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: guestbook-coldwalk
+  labels:
+    app.kubernetes.io/name: guestbook-coldwalk
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: guestbook-coldwalk
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}
+    - ports:
+        - port: 8080
+          protocol: TCP
