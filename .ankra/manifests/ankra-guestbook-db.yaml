@@ -1,0 +1,56 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: ankra-guestbook-db
+  labels:
+    app.kubernetes.io/name: ankra-guestbook-db
+    app.kubernetes.io/managed-by: ankra
+spec:
+  instances: ${{ ankra.database_instances }}
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.11
+  storage:
+    size: ${{ ankra.database_storage }}
+  bootstrap:
+    initdb:
+      database: ankra-guestbook-db
+      owner: ankra-guestbook-db
+  primaryUpdateStrategy: unsupervised
+  enableSuperuserAccess: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ankra-guestbook-db
+  labels:
+    app.kubernetes.io/name: ankra-guestbook-db
+    app.kubernetes.io/managed-by: ankra
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: ankra-guestbook-db
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cnpg-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudnative-pg
+      ports:
+        - port: 8000
+          protocol: TCP
+        - port: 5432
+          protocol: TCP
+    - ports:
+        - port: 8000
+          protocol: TCP

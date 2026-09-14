@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ankra-guestbook
+  labels:
+    app.kubernetes.io/name: ankra-guestbook
+  annotations:
+    ankra.io/generated: "true"
+    cert-manager.io/cluster-issuer: ${{ ankra.ingress_tls_issuer }}
+spec:
+  ingressClassName: ${{ ankra.ingress_class }}
+  tls:
+    - hosts:
+        - ${{ ankra.ingress_host }}
+      secretName: ankra-guestbook-tls
+  rules:
+    - host: ${{ ankra.ingress_host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ankra-guestbook
+                port:
+                  number: 80
